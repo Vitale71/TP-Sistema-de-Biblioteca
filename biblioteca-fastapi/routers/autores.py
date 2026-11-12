@@ -5,9 +5,7 @@ from models.autor import (Autor, AutorCreate, AutorUpdate)
 
 router = APIRouter()
 
-autores: list[Autor] = []  # Lista para almacenar los autores
-
-@router.post("/autores", response_model=Autor, status_code=status.HTTP_201_CREATED)
+@router.post("/autores", status_code=status.HTTP_201_CREATED)
 def crear_autor(autor: AutorCreate, session: SessionDep) -> Autor:
     nuevo_autor = Autor.model_validate(autor)  # convierte Create -> tabla
     session.add(nuevo_autor)       # lo deja "en espera"
@@ -15,10 +13,12 @@ def crear_autor(autor: AutorCreate, session: SessionDep) -> Autor:
     session.refresh(nuevo_autor)   # recarga para obtener el id generado
     return nuevo_autor
 
-@router.get("/autores", response_model=list[Autor], status_code=200)
+
+@router.get("/autores", status_code=200)
 def listar_autores(session: SessionDep) -> list[Autor]:
     autores = session.exec(select(Autor)).all()
     return autores
+
 
 @router.get("/autores/{autor_id}", response_model=Autor, status_code=200)
 def obtener_autor(autor_id: int, session: SessionDep) -> Autor:
@@ -27,7 +27,8 @@ def obtener_autor(autor_id: int, session: SessionDep) -> Autor:
         raise HTTPException(status_code=404, detail="Autor no encontrado")
     return autor
 
-@router.put("/autores/{autor_id}", response_model=Autor, status_code=200)
+
+@router.put("/autores/{autor_id}", status_code=200)
 def actualizar_autor(autor_id: int, autor_update: AutorUpdate, session: SessionDep) -> Autor:
     autor = session.get(Autor, autor_id)
     if not autor:
@@ -40,6 +41,7 @@ def actualizar_autor(autor_id: int, autor_update: AutorUpdate, session: SessionD
     session.commit()
     session.refresh(autor)
     return autor
+
 
 @router.delete("/autores/{autor_id}", status_code=204)
 def eliminar_autor(autor_id: int, session: SessionDep):
