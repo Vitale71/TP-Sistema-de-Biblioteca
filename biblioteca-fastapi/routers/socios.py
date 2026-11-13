@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from database import SessionDep
@@ -8,9 +9,13 @@ router = APIRouter()
 @router.post("/socios", status_code=status.HTTP_201_CREATED)
 def crear_socio(socio: SocioCreate, session: SessionDep) -> Socio:
     nuevo_socio = Socio.model_validate(socio)  # convierte Create -> tabla
-    session.add(nuevo_socio)       # lo deja "en espera"
-    session.commit()            # lo guarda de verdad
-    session.refresh(nuevo_socio)   # recarga para obtener el id generado
+    try:
+        session.add(nuevo_socio)       # lo deja "en espera"
+        session.commit()            # lo guarda de verdad
+        session.refresh(nuevo_socio)   # recarga para obtener el id generado
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Email ya existe")
     return nuevo_socio  
 
 @router.get("/socios", status_code=200)
@@ -33,7 +38,7 @@ def actualizar_socio(socio_id: int, socio_update: SocioUpdate, session: SessionD
     
     socio_data = socio_update.model_dump(exclude_unset=True) # Solo obtiene los campos enviados por el cliente
 
-    socio.sqlmodel_update(socio, socio_update)  # Actualiza el objeto con los datos del cliente
+    socio.sqlmodel_update(socio_data)  # Actualiza el objeto con los datos del cliente
     session.add(socio)
     session.commit()
     session.refresh(socio)

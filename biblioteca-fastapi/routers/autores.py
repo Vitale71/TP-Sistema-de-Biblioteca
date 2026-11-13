@@ -36,7 +36,7 @@ def actualizar_autor(autor_id: int, autor_update: AutorUpdate, session: SessionD
     
     autor_data = autor_update.model_dump(exclude_unset=True) # Solo obtiene los campos enviados por el cliente
 
-    autor.sqlmodel_update(autor, autor_update)  # Actualiza el objeto con los datos del cliente
+    autor.sqlmodel_update(autor_data)  # Actualiza el objeto con los datos del cliente
     session.add(autor)
     session.commit()
     session.refresh(autor)

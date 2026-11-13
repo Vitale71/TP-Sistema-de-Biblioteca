@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from database import SessionDep
@@ -8,9 +9,13 @@ router = APIRouter()
 @router.post("/libros", status_code=status.HTTP_201_CREATED)
 def crear_libro(libro: LibroCreate, session: SessionDep) -> Libro:
     nuevo_libro = Libro.model_validate(libro)  # convierte Create -> tabla
-    session.add(nuevo_libro)       # lo deja "en espera"
-    session.commit()            # lo guarda de verdad
-    session.refresh(nuevo_libro)   # recarga para obtener el id generado
+    try:
+        session.add(nuevo_libro)       # lo deja "en espera"
+        session.commit()            # lo guarda de verdad
+        session.refresh(nuevo_libro)   # recarga para obtener el id generado
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Codigo ISBN ya existe")
     return nuevo_libro
 
 
@@ -36,7 +41,7 @@ def actualizar_libro(libro_id: int, libro_update: LibroUpdate, session: SessionD
     
     libro_data = libro_update.model_dump(exclude_unset=True) # Solo obtiene los campos enviados por el cliente
 
-    libro.sqlmodel_update(libro, libro_update)  # Actualiza el objeto con los datos del cliente
+    libro.sqlmodel_update(libro_data)  # Actualiza el objeto con los datos del cliente
     session.add(libro)
     session.commit()
     session.refresh(libro)
