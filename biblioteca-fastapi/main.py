@@ -9,14 +9,9 @@ from routers import autores, libros, socios
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: inicializar recursos
-    print("Starting up...")
-    app.state.db = await create_db_and_tables()
-
+    create_db_and_tables()
     yield # La aplicación sirve solicitudes aquí
-
-    # Shutdown: liberar recursos
-    print("Shutting down...")
-    await app.state.db.close()
+    
 
 app = FastAPI(lifespan=lifespan)
 

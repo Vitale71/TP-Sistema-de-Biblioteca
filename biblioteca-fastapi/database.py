@@ -10,12 +10,12 @@ DATABASE_URL = "sqlite:///biblioteca.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 
-async def create_db_and_tables():
+def create_db_and_tables():
     # Crea las tablas de todos los modelos con table=True (si no existen)
     SQLModel.metadata.create_all(engine)
 
 
-async def get_session():
+def get_session():
     # Abre una sesión, se la presta al endpoint y la cierra al terminar
     with Session(engine) as session:
         yield session
