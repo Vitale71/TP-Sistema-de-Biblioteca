@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship, SQLModel
+
+from models.libro_autor import LibroAutor
 if TYPE_CHECKING:
     from models.libro import Libro
 
@@ -14,8 +16,8 @@ class AutorBase(SQLModel):
 class Autor(AutorBase, table=True):
     # table=True => esta clase ES una tabla en la base de datos
     id: int | None = Field(default=None, primary_key=True)
-    autores: list["Libro"] = Relationship(
-        back_populates="autor", link_model="LibroAutor"
+    libros: list["Libro"] = Relationship(
+        back_populates="autores", link_model=LibroAutor
     )
 
 

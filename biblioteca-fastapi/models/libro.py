@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from sqlmodel import Field, Relationship, SQLModel
 
 from models.autor import AutorPublic
+from models.libro_autor import LibroAutor
 if TYPE_CHECKING:
     from models.autor import Autor
 
@@ -16,9 +17,8 @@ class LibroBase(SQLModel):
 class Libro(LibroBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     isbn: str = Field(unique=True)  # no puede repetirse en la tabla
-    stock: int
-    libros: list["Autor"] = Relationship(
-        back_populates="libro", link_model="LibroAutor"
+    autores: list["Autor"] = Relationship(
+        back_populates="libros", link_model=LibroAutor
         )  # Relación con la tabla intermediaia
 
 class LibroCreate(LibroBase):

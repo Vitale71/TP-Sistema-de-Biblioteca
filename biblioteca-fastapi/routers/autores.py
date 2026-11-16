@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from database import SessionDep
-from models.autor import (Autor, AutorCreate, AutorUpdate)
+from models.autor import (Autor, AutorCreate, AutorPublic, AutorUpdate)
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ def crear_autor(autor: AutorCreate, session: SessionDep) -> Autor:
     return nuevo_autor
 
 
-@router.get("/autores", status_code=200)
+@router.get("/autores", response_model=list[Autor], status_code=200)
 def listar_autores(session: SessionDep) -> list[Autor]:
     autores = session.exec(select(Autor)).all()
     return autores

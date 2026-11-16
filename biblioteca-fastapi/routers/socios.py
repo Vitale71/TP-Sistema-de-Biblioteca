@@ -37,11 +37,14 @@ def actualizar_socio(socio_id: int, socio_update: SocioUpdate, session: SessionD
         raise HTTPException(status_code=404, detail="Socio no encontrado")
     
     socio_data = socio_update.model_dump(exclude_unset=True) # Solo obtiene los campos enviados por el cliente
-
-    socio.sqlmodel_update(socio_data)  # Actualiza el objeto con los datos del cliente
-    session.add(socio)
-    session.commit()
-    session.refresh(socio)
+    try:
+        socio.sqlmodel_update(socio_data)  # Actualiza el objeto con los datos del cliente
+        session.add(socio)
+        session.commit()
+        session.refresh(socio)
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Email ya existe")
     return socio
 
 @router.delete("/socios/{socio_id}", status_code=204)
