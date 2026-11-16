@@ -14,13 +14,13 @@ def crear_autor(autor: AutorCreate, session: SessionDep) -> Autor:
     return nuevo_autor
 
 
-@router.get("/autores", response_model=list[Autor], status_code=200)
+@router.get("/autores", response_model=list[AutorPublic], status_code=200)
 def listar_autores(session: SessionDep) -> list[Autor]:
     autores = session.exec(select(Autor)).all()
     return autores
 
 
-@router.get("/autores/{autor_id}", response_model=Autor, status_code=200)
+@router.get("/autores/{autor_id}", response_model=AutorPublic, status_code=200)
 def obtener_autor(autor_id: int, session: SessionDep) -> Autor:
     autor = session.get(Autor, autor_id)
     if not autor:
@@ -28,7 +28,7 @@ def obtener_autor(autor_id: int, session: SessionDep) -> Autor:
     return autor
 
 
-@router.put("/autores/{autor_id}", status_code=200)
+@router.put("/autores/{autor_id}", response_model=AutorPublic, status_code=200)
 def actualizar_autor(autor_id: int, autor_update: AutorUpdate, session: SessionDep) -> Autor:
     autor = session.get(Autor, autor_id)
     if not autor:

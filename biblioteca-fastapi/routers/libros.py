@@ -7,7 +7,7 @@ from models.libro import (Libro, LibroCreate, LibroPublic, LibroUpdate)
 
 router = APIRouter()
 
-@router.post("/libros", status_code=status.HTTP_201_CREATED)
+@router.post("/libros",response_model=LibroPublic , status_code=status.HTTP_201_CREATED)
 def crear_libro(libro: LibroCreate, session: SessionDep) -> Libro:
     nuevo_libro = Libro.model_validate(libro)
     try:
@@ -42,7 +42,6 @@ def asociar_autor_a_libro(libro_id: int, autor_id: int, session: SessionDep):
     return libro
 
 
-
 @router.get("/libros",response_model=list[LibroPublic] , status_code=200)
 def listar_libros(session: SessionDep, disponibles: bool = False) -> list[Libro]:
     consulta = select(Libro)
@@ -61,7 +60,7 @@ def obtener_libro(libro_id: int, session: SessionDep) -> Libro:
     return libro
 
 
-@router.put("/libros/{libro_id}", status_code=200)
+@router.put("/libros/{libro_id}", response_model=LibroPublic, status_code=200)
 def actualizar_libro(libro_id: int, libro_update: LibroUpdate, session: SessionDep) -> Libro:
     libro = session.get(Libro, libro_id)
     if not libro:
@@ -80,7 +79,7 @@ def actualizar_libro(libro_id: int, libro_update: LibroUpdate, session: SessionD
     return libro
 
 
-@router.delete("/libros/{libro_id}", status_code=204)
+@router.delete("/libros/{libro_id}", status_code=200)
 def eliminar_libro(libro_id: int, session: SessionDep):
     libro = session.get(Libro, libro_id)
     if not libro:
