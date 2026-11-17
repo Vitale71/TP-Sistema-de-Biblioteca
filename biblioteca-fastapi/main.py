@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from database import create_db_and_tables
-from routers import autores, libros, socios
+from routers import autores, libros, socios, prestamos
 
 # Create the application instance
 
@@ -19,6 +19,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(tags=["Autores"], router=autores.router)
 app.include_router(tags=["Libros"], router=libros.router)
 app.include_router(tags=["Socios"], router=socios.router)
+app.include_router(tags=["Prestamos"], router=prestamos.router)
 
 
 
