@@ -25,6 +25,12 @@ def listar_socios(session: SessionDep) -> list[Socio]:
     socios = session.exec(select(Socio)).all()
     return socios
 
+@router.get("/socios/{socio_id}", status_code=200)
+def obtener_socio(socio_id: int, session: SessionDep) -> Socio:
+    socio = session.get(Socio, socio_id)
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+    return socio
 
 # Query param "activos": sin él devuelve todos los préstamos del socio,
 # con ?activos=true solo los que todavía no se devolvieron.

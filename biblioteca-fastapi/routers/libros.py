@@ -79,7 +79,7 @@ def actualizar_libro(libro_id: int, libro_update: LibroUpdate, session: SessionD
     return libro
 
 
-@router.delete("/libros/{libro_id}", status_code=200)
+@router.delete("/libros/{libro_id}", status_code=204)
 def eliminar_libro(libro_id: int, session: SessionDep):
     libro = session.get(Libro, libro_id)
     if not libro:
