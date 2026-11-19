@@ -6,6 +6,8 @@ class PrestamoBase(SQLModel):
     libro_id: int
     
 class PrestamoCreate(PrestamoBase):
+    # El cliente manda solo socio_id y libro_id.
+    # Las fechas y la multa las calcula el servidor.
     pass  # Recibe únicamente socio_id y libro_id del cliente
 
 class Prestamo(PrestamoBase, table=True):

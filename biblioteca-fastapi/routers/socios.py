@@ -2,7 +2,9 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from database import SessionDep
+from models.prestamo import Prestamo, PrestamoPublic
 from models.socio import (Socio, SocioCreate, SocioUpdate)
+from services import prestamos as prestamos_service
 
 router = APIRouter()
 
@@ -23,12 +25,13 @@ def listar_socios(session: SessionDep) -> list[Socio]:
     socios = session.exec(select(Socio)).all()
     return socios
 
-@router.get("/socios/{socio_id}", status_code=200)
-def obtener_socio(socio_id: int, session: SessionDep) -> Socio:
-    socio = session.get(Socio, socio_id)
-    if not socio:
-        raise HTTPException(status_code=404, detail="Socio no encontrado")
-    return socio
+
+# Query param "activos": sin él devuelve todos los préstamos del socio,
+# con ?activos=true solo los que todavía no se devolvieron.
+@router.get("/socios/{socio_id}/prestamos", response_model=list[PrestamoPublic], status_code=200,)
+def listar_prestamos_del_socio(socio_id: int, session: SessionDep, activos: bool = False,) -> list[Prestamo]:
+    return prestamos_service.listar_prestamos_de_socio(session, socio_id, activos)
+
 
 @router.put("/socios/{socio_id}", status_code=200)
 def actualizar_socio(socio_id: int, socio_update: SocioUpdate, session: SessionDep) -> Socio:

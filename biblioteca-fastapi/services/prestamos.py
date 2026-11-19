@@ -1,15 +1,19 @@
 from datetime import date, timedelta
 
 from fastapi import HTTPException
-from requests import session
 from sqlmodel import Session, col, select
 
 from models.libro import Libro
-from models.prestamo import Prestamo
+from models.prestamo import Prestamo, PrestamoCreate
 from models.socio import Socio
 
-def crear_prestamo(session: Session, socio_id: int, libro_id: int, hoy: date | None = None) -> Prestamo:
-    hoy = hoy or date.today()  # Si no se proporciona una fecha, usar la fecha actual
+# Reglas de negocio como constantes
+PLAZO_DIAS = 14
+MULTA_POR_DIA = 100
+MAX_PRESTAMOS_ACTIVOS = 3
+
+def crear_prestamo(session: Session, socio_id: int, libro_id: int, hoy: date | None = None,) -> Prestamo:
+    hoy = hoy or date.today()
 
     socio = session.get(Socio, socio_id)
     if not socio:
@@ -33,17 +37,15 @@ def crear_prestamo(session: Session, socio_id: int, libro_id: int, hoy: date | N
         )
     ).all()
 
-    if len(activos) >= 3:
-        raise HTTPException(status_code=409, detail="El socio ya tiene libros pendientes de devolución")
+    if len(activos) >= MAX_PRESTAMOS_ACTIVOS:
+        raise HTTPException(status_code=409, detail="El socio ya tiene el máximo de préstamos activos",)
 
     libro.stock -= 1  # Disminuir el stock del libro
     prestamo = Prestamo(
         socio_id=socio_id,
         libro_id=libro_id,
         fecha_prestamo=hoy,
-        fecha_vencimiento=hoy + timedelta(days=14),
-        fecha_devolucion=None,
-        multa=0
+        fecha_vencimiento=hoy + timedelta(days=PLAZO_DIAS),
     )
 
     session.add(prestamo)
@@ -52,3 +54,44 @@ def crear_prestamo(session: Session, socio_id: int, libro_id: int, hoy: date | N
     session.refresh(prestamo)
 
     return prestamo
+
+def devolver_libro(session: Session, prestamo_id: int, hoy: date| None = None,) -> Prestamo:
+    hoy = hoy or date.today()  # Si no se proporciona una fecha, usar la fecha actual
+
+    prestamo = session.get(Prestamo, prestamo_id)
+    if not prestamo:
+        raise HTTPException(status_code=404, detail="Préstamo no encontrado")
+    
+    if prestamo.fecha_devolucion is not None:
+        raise HTTPException(status_code=409, detail="El préstamo ya fue devuelto")
+
+    dias_atraso = max(0, (hoy - prestamo.fecha_vencimiento).days)
+    prestamo.fecha_devolucion = hoy
+    prestamo.multa = dias_atraso * MULTA_POR_DIA
+    
+    libro = session.get(Libro, prestamo.libro_id)
+    if libro:
+        libro.stock += 1
+        session.add(libro)
+
+    session.add(prestamo)
+    session.commit()
+    session.refresh(prestamo)
+    return prestamo
+
+
+def listar_prestamos_de_socio(
+    session: Session,
+    socio_id: int,
+    solo_activos: bool = False,
+) -> list[Prestamo]:
+    socio = session.get(Socio, socio_id)
+    if not socio:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+
+    # Consulta armada por partes: la condición extra se suma si hace falta
+    consulta = select(Prestamo).where(Prestamo.socio_id == socio_id)
+    if solo_activos:
+        consulta = consulta.where(col(Prestamo.fecha_devolucion).is_(None))
+
+    return list(session.exec(consulta).all())
